@@ -21,15 +21,12 @@ public class AccountRegistrationController {
 	@CrossOrigin
 	@PostMapping(value = "/accountRegistration")
 	public String accountRegistration(@RequestBody AccountHolder accountHolder ) {
-		
-		
 		return accountRegistrationServices.AccountRegistration(accountHolder);
 	}
 	
 	@CrossOrigin
 	@PostMapping(value="/sendOtpEmailId")
 	public String sendOtpEmailId(@RequestParam("emailId") String emailId) {
-		
 		accountRegistrationServices.sendOtpToEmailId(emailId);
 		return "SENDED";
 	}
