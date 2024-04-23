@@ -21,7 +21,8 @@ public class AccountRegistrationController {
 	@CrossOrigin
 	@PostMapping(value = "/accountRegistration")
 	public String accountRegistration(@RequestBody AccountHolder accountHolder ) {
-		return accountRegistrationServices.AccountRegistration(accountHolder);
+		 accountRegistrationServices.AccountRegistration(accountHolder);
+		return "CREATED";
 	}
 	
 	@CrossOrigin
@@ -36,7 +37,7 @@ public class AccountRegistrationController {
 	public String validateEmailIdOtp(@RequestParam("emailId") String emailId, @RequestParam("otp") Integer otp ) {
 		
 		accountRegistrationServices.validateEmailIdOtp(emailId, otp);
-		return "Valid";
+		return "VALID";
 	}
 	
 }

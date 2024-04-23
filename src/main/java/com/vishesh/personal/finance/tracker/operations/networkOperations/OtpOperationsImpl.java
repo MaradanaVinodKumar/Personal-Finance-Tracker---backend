@@ -8,25 +8,25 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.vishesh.personal.finance.tracker.operations.inputValidations.FieldValidation;
+import com.vishesh.personal.finance.tracker.operations.registrationOperations.RegistrationOperations;
 import com.vishesh.personal.finance.tracker.repository.EmailOtpRepository;
 import com.vishesh.personal.finance.tracker.repository.Entity.EmailOtpEntity;
 
 @Service
 public class OtpOperationsImpl implements OtpOperations{
-
 	@Autowired
 	public EmailOtpRepository emailOtpRepository;
-	
 	@Autowired
 	public JavaMailSender mailSender;
-	
 	@Autowired
 	FieldValidation fieldValidation;
-	
+	@Autowired
+	RegistrationOperations registrationOperations;
 	
 	@Override
 	public void sendOtpToEmailId(String emailId) {
 		fieldValidation.emailIdValidation(emailId);
+		registrationOperations.accountHolderExist(emailId);
 		//call generateOtp method and store the otp in variable
 		Integer generatedOtp=generateOtp();
 		//send otp to email
@@ -49,38 +49,60 @@ public class OtpOperationsImpl implements OtpOperations{
 		message.setSubject("Your One-Time Password (OTP) for Personal Finance Tracker Access");
 		message.setText(bodyText);
 		mailSender.send(message);
-
 		//call storeOtpRecordInDb method and pass the parameters.
 		storeOtpRecordInDb(emailId, generatedOtp, false);
-		
-		
 	}
 
 	@Override
-	public String emailIdOtpValidation(String emailId, Integer otp) {
-		
+	public void emailIdOtpValidation(String emailId, Integer otp) {
 		//connect the otp table and serch the email then validate the otp is currect or not 
+		EmailOtpEntity emailOtps = emailOtpRepository.findByEmailId(emailId);
 		//if the otp is valid then update record validity id is true;
-		
-		return null;
+		if(emailOtps != null)
+		{
+			if((emailOtps.getOtp()).equals(otp))
+			{
+				emailOtpRepository.updateOtpValidityByEmailId(emailId, true);
+			}else {
+				throw new Error("otp not matched");
+			}
+		}
+		else
+		{
+			throw new Error("email id not found!");	
+		}
 	}
 
 	@Override
-	public String removeEmailIdOtpRecordInDb(String emailId) {
+	public void removeEmailIdOtpRecordInDb(String emailId) {
 		fieldValidation.emailIdValidation(emailId);
 		//conncet the otp table and remove the email id record.
-		
-		return null;
+		EmailOtpEntity emailOtps = emailOtpRepository.findByEmailId(emailId);
+		if(emailOtps !=null)
+		{
+			 emailOtpRepository.deleteByEmailId(emailId);
+		}
+		else {
+			throw new Error("email id not found!");
+		}
 	}
 
 	@Override
-	public Boolean validateEmailIdInDb(String emailId) {
-		
+	public void validateEmailIdInDb(String emailId) {
 		fieldValidation.emailIdValidation(emailId);
-		
 		//connect otp table and then check email id status valid or not.
-		
-		return null;
+		EmailOtpEntity emailOtps = emailOtpRepository.findByEmailId(emailId);
+		if(emailOtps != null)
+		{
+			if(!emailOtps.getValidity())
+			{
+				throw new Error("email id not valid!");
+			}
+		}
+		else
+		{
+			throw new Error("email id not found!");	
+		}
 	}
 
 	@Override
@@ -91,7 +113,7 @@ public class OtpOperationsImpl implements OtpOperations{
 		Integer otp=0;
 		while(true)
 		{
-			otp = otp *10 + (random.nextInt(10)+1);
+			otp = otp *10 + (random.nextInt(8)+1);
 			
 			if(count==4)
 			{
@@ -104,10 +126,8 @@ public class OtpOperationsImpl implements OtpOperations{
 
 	@Override
 	public void storeOtpRecordInDb(String emailId,Integer otp,Boolean validity) {
-		
 		//check the email in db if email is in the db then update the otp or else add the new record.
 		EmailOtpEntity emailOtps = emailOtpRepository.findByEmailId(emailId);
-		
 		if(emailOtps == null)
 		{
 			EmailOtpEntity emailOtpRecord=new EmailOtpEntity();
@@ -119,7 +139,6 @@ public class OtpOperationsImpl implements OtpOperations{
 		else {
 			emailOtpRepository.updateByEmailId(emailId, otp, validity);
 		}
-		
 	}
 
 
